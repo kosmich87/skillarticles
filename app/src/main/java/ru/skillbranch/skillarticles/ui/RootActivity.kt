@@ -27,7 +27,7 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
 class RootActivity : AppCompatActivity() {
 
     private lateinit var viewModel: ArticleViewModel
-    private var queryStr: String? = null
+    private lateinit var searchView: SearchView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,45 +50,44 @@ class RootActivity : AppCompatActivity() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        Log.d("TAG", "onCreateOptionsMenu ${queryStr}")
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
 
-        val searchItem: MenuItem? = menu?.findItem(R.id.action_search)
+        val searchItem = menu.findItem(R.id.action_search)
         val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
+        searchView = searchItem?.actionView as SearchView
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
+        searchView.queryHint = "Search..."
 
-        val searchView: SearchView? = searchItem?.actionView as SearchView
-        searchView?.setSearchableInfo(searchManager.getSearchableInfo(componentName))
-        searchView?.queryHint = "Search..."
-
-        if (!queryStr.isNullOrBlank()) {
+        if (viewModel.currentState.isSearch) {
             searchItem.expandActionView()
-            searchView?.setQuery(queryStr, false)
-            searchView?.clearFocus()
+            searchView.setQuery(viewModel.currentState.searchQuery, false)
+            searchView.clearFocus()
+        }else {
+            searchView.clearFocus()
         }
 
-        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
+        searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+            override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
                 viewModel.handleIsSearch(true)
+                return true
+            }
+
+            override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+                viewModel.handleIsSearch(false)
+                return true
+            }
+
+        })
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
                 viewModel.handleSearchQuery(query)
                 return false
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 return false
-            }
-
-        })
-
-        searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
-            override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
-                return true
-            }
-
-            override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
-                viewModel.handleSearchQuery(null)
-                viewModel.handleIsSearch(false)
-                return true
             }
 
         })
@@ -143,10 +142,6 @@ class RootActivity : AppCompatActivity() {
         toolbar.title = data.title ?: "Skill Articles"
         toolbar.subtitle = data.category ?: "loading..."
         if (data.categoryIcon != null) toolbar.logo = getDrawable(data.categoryIcon as Int)
-
-        if (data.isSearch) {
-            queryStr = data.searchQuery
-        }
     }
 
     private fun renderNotification(notify: Notify) {

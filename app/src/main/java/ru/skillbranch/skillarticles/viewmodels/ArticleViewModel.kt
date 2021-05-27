@@ -117,6 +117,7 @@ class ArticleViewModel(private val articleId: String): BaseViewModel<ArticleStat
     }
 
     fun handleSearchQuery(query: String?){
+        query ?: return
         updateState { it.copy(searchQuery = query) }
     }
 
