@@ -27,11 +27,14 @@
         <item name="colorOnPrimary">@color/color_on_article_bar</item>
         <item name="colorSurface">@color/color_article_bar</item>
         <item name="colorControlNormal">@color/color_on_article_bar</item>
+        <item name="android:editTextColor">@color/search_color_text</item>
+        <item name="android:textColorHint">@color/search_color_hint</item>
     </style>
 
     <style name="ArticleToolbar" parent="Widget.MaterialComponents.Toolbar.Primary">
         <item name="titleTextColor">?attr/colorOnPrimary</item>
         <item name="contentInsetStartWithNavigation">0dp</item>
+        <item name="colorControlActivated">?attr/colorOnPrimary</item>
     </style>
 
 

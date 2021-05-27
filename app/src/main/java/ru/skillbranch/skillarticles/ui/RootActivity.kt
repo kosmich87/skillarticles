@@ -1,11 +1,17 @@
 package ru.skillbranch.skillarticles.ui
 
+import android.app.SearchManager
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.Toolbar
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.ViewModelProviders
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_root.*
@@ -21,6 +27,7 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
 class RootActivity : AppCompatActivity() {
 
     private lateinit var viewModel: ArticleViewModel
+    private var queryStr: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,31 +40,84 @@ class RootActivity : AppCompatActivity() {
         val vmFactory = ViewModelFactory("0")
         viewModel = ViewModelProviders.of(this, vmFactory).get(ArticleViewModel::class.java)
 
-        viewModel.observeState(this){
+        viewModel.observeState(this) {
             renderUi(it)
             setupToolbar()
         }
 
-        viewModel.observeNotifications(this){
+        viewModel.observeNotifications(this) {
             renderNotification(it)
         }
     }
 
-    private fun setupToolbar(){
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        val logo = if (toolbar.childCount > 2) toolbar.getChildAt(2) as ImageView else null
-        logo?.scaleType = ImageView.ScaleType.CENTER_CROP
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        Log.d("TAG", "onCreateOptionsMenu ${queryStr}")
+        menuInflater.inflate(R.menu.main_menu, menu)
 
-        (logo?.layoutParams as? ActionBar.LayoutParams)?.let {
-            it.width = dpToIntPx(40)
-            it.height = dpToIntPx(40)
-            it.marginEnd = dpToIntPx(16)
-            logo.layoutParams = it
+        val searchItem: MenuItem? = menu?.findItem(R.id.action_search)
+        val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
+
+        val searchView: SearchView? = searchItem?.actionView as SearchView
+        searchView?.setSearchableInfo(searchManager.getSearchableInfo(componentName))
+        searchView?.queryHint = "Search..."
+
+        if (!queryStr.isNullOrBlank()) {
+            searchItem.expandActionView()
+            searchView?.setQuery(queryStr, false)
+            searchView?.clearFocus()
         }
+
+        searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                viewModel.handleIsSearch(true)
+                viewModel.handleSearchQuery(query)
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                return false
+            }
+
+        })
+
+        searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+            override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
+                return true
+            }
+
+            override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+                viewModel.handleSearchQuery(null)
+                viewModel.handleIsSearch(false)
+                return true
+            }
+
+        })
+
+        return super.onCreateOptionsMenu(menu)
     }
 
-    private fun renderUi(data: ArticleState){
+    private fun setupToolbar() {
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        try {
+            val logo = if (toolbar.childCount > 2) toolbar.getChildAt(2) as ImageView else null
+            logo?.scaleType = ImageView.ScaleType.CENTER_CROP
+
+            (logo?.layoutParams as? ActionBar.LayoutParams)?.let {
+                it.width = dpToIntPx(40)
+                it.height = dpToIntPx(40)
+                it.marginEnd = dpToIntPx(16)
+                logo.layoutParams = it
+            }
+        } catch (e: Exception) {
+
+        }
+
+    }
+
+    private fun renderUi(data: ArticleState) {
+        Log.d("TAG", "renderUi")
         btn_settings.isChecked = data.isShowMenu
         if (data.isShowMenu) submenu.open() else submenu.close()
 
@@ -65,8 +125,9 @@ class RootActivity : AppCompatActivity() {
         btn_bookmark.isChecked = data.isBookmark
 
         switch_mode.isChecked = data.isDarkMode
-        delegate.localNightMode = if (data.isDarkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
-        if (data.isBigText){
+        delegate.localNightMode =
+            if (data.isDarkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        if (data.isBigText) {
             tv_text_content.textSize = 18f
             btn_text_up.isChecked = true
             btn_text_down.isChecked = false
@@ -76,11 +137,16 @@ class RootActivity : AppCompatActivity() {
             btn_text_down.isChecked = true
         }
 
-        tv_text_content.text = if (data.isLoadingContent) "loading" else data.content.first() as String
+        tv_text_content.text =
+            if (data.isLoadingContent) "loading" else data.content.first() as String
 
         toolbar.title = data.title ?: "Skill Articles"
         toolbar.subtitle = data.category ?: "loading..."
         if (data.categoryIcon != null) toolbar.logo = getDrawable(data.categoryIcon as Int)
+
+        if (data.isSearch) {
+            queryStr = data.searchQuery
+        }
     }
 
     private fun renderNotification(notify: Notify) {
@@ -88,10 +154,11 @@ class RootActivity : AppCompatActivity() {
         snackbar.setAnchorView(bottombar)
 
         when (notify) {
-            is Notify.TextMessage -> { }
+            is Notify.TextMessage -> {
+            }
             is Notify.ActionMessage -> {
                 snackbar.setActionTextColor(getColor(R.color.color_accent_dark))
-                snackbar.setAction(notify.actionLabel){
+                snackbar.setAction(notify.actionLabel) {
                     notify.actionHandler?.invoke()
                 }
             }
@@ -111,7 +178,7 @@ class RootActivity : AppCompatActivity() {
     }
 
     private fun setupSubmenu() {
-        btn_text_up.setOnClickListener{ viewModel.handleUpText() }
+        btn_text_up.setOnClickListener { viewModel.handleUpText() }
         btn_text_down.setOnClickListener { viewModel.handleDownText() }
         switch_mode.setOnClickListener { viewModel.handleNightMode() }
     }
