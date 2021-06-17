@@ -223,6 +223,7 @@ class RootActivity : AppCompatActivity(), IArticleView {
                 viewModel.handleDownResult()
             }
             btnSearchClose.setOnClickListener {
+                vb.tvTextContent.clearFocus()
                 viewModel.handleSearchMode(false)
                 invalidateOptionsMenu()
             }
