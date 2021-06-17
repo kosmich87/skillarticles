@@ -15,13 +15,13 @@ class PrefObjDelegate<T> (private val adapter: JsonAdapter<T>, private val custo
     operator fun provideDelegate(
         thisRef: PrefManager,
         prop: KProperty<*>
-    ): ReadWriteProperty<PrefManager, T> {
+    ): ReadWriteProperty<PrefManager, T?> {
 
         val key = stringPreferencesKey(customKey ?: prop.name)
-        return object : ReadWriteProperty<PrefManager, T> {
+        return object : ReadWriteProperty<PrefManager, T?> {
             private var _storedValue: T? = null
 
-            override fun setValue(thisRef: PrefManager, property: KProperty<*>, value: T) {
+            override fun setValue(thisRef: PrefManager, property: KProperty<*>, value: T?) {
                 _storedValue = value
                 thisRef.scope.launch {
                     thisRef.dataStore.edit { pref ->
@@ -30,7 +30,7 @@ class PrefObjDelegate<T> (private val adapter: JsonAdapter<T>, private val custo
                 }
             }
 
-            override fun getValue(thisRef: PrefManager, property: KProperty<*>): T {
+            override fun getValue(thisRef: PrefManager, property: KProperty<*>): T? {
                 if (_storedValue == null) {
                     //async flow
                     val flowValue = thisRef.dataStore.data
@@ -41,7 +41,7 @@ class PrefObjDelegate<T> (private val adapter: JsonAdapter<T>, private val custo
                     _storedValue = runBlocking(Dispatchers.IO) { flowValue.first() }
                 }
 
-                return _storedValue!!
+                return _storedValue
             }
         }
     }
