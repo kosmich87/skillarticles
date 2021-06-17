@@ -216,10 +216,12 @@ class RootActivity : AppCompatActivity(), IArticleView {
 
             btnResultUp.setOnClickListener {
                 searchView.clearFocus()
+                vb.tvTextContent.requestFocus()
                 viewModel.handleUpResult()
             }
             btnResultDown.setOnClickListener {
                 searchView.clearFocus()
+                vb.tvTextContent.requestFocus()
                 viewModel.handleDownResult()
             }
             btnSearchClose.setOnClickListener {
