@@ -1,12 +1,14 @@
 package ru.skillbranch.skillarticles.ui.custom
 
 import android.content.Context
+import android.graphics.Canvas
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewAnimationUtils
+import androidx.annotation.VisibleForTesting
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.animation.doOnEnd
@@ -93,6 +95,21 @@ class ArticleSubmenu @JvmOverloads constructor(
             isOpen = state.ssIsOpen
             visibility = if (isOpen) View.VISIBLE else View.GONE
         }
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    public override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        //TODO implement me
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    public override fun onLayout(p0: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        //TODO implement me
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    public override fun dispatchDraw(canvas: Canvas) {
+        //TODO implement me
     }
 
     private class SavedState : BaseSavedState, Parcelable {

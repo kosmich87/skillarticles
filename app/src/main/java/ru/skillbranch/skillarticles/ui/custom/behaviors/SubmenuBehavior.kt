@@ -28,7 +28,7 @@ class SubmenuBehavior : CoordinatorLayout.Behavior<ArticleSubmenu>() {
     }
 
     private fun animate(child: ArticleSubmenu, dependency: Bottombar){
-        val fraction = dependency.translationY / dependency.minHeight
+        val fraction = dependency.translationY / dependency.height
         child.translationX = (child.width + child.marginRight) * fraction
     }
 }

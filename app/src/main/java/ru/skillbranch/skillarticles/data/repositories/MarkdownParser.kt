@@ -1,4 +1,4 @@
-package ru.skillbranch.skillarticles.markdown
+package ru.skillbranch.skillarticles.data.repositories
 
 import java.lang.StringBuilder
 import java.util.regex.Pattern
@@ -18,9 +18,11 @@ object MarkdownParser {
     private const val RULE_GROUP = "(^[-_*]{3}$)"
     private const val INLINE_GROUP = "((?<!`)`[^`\\s].*?[^`\\s]?`(?!`))"
     private const val LINK_GROUP = "(\\[[^\\[\\]]*?]\\(.+?\\)|^\\[*?]\\(.*?\\))"
-    private const val BLOCK_CODE_GROUP = "(^```[\\s\\S]+?```$)"//"(```\\S.*?[\\s\\S]*?```)" //group 12
+    private const val BLOCK_CODE_GROUP =
+        "(^```[\\s\\S]+?```$)"//"(```\\S.*?[\\s\\S]*?```)" //group 12
     private const val ORDERED_LIST_ITEM_GROUP = "(^\\d{1,2}\\.\\s.+?$)"//"(^\\d+\\. .+$)" //group 10
-    private const val IMAGE_GROUP = "(^!\\[[^\\[\\]]*?\\]\\(.*?\\)$)"//"(!\\[.*\\]\\([^\\)]+\\))" //group 11
+    private const val IMAGE_GROUP =
+        "(^!\\[[^\\[\\]]*?\\]\\(.*?\\)$)"//"(!\\[.*\\]\\([^\\)]+\\))" //group 11
 
 
     //result regex
@@ -39,28 +41,54 @@ object MarkdownParser {
 
     private val elementsPattern by lazy { Pattern.compile(MARKDOWN_GROUPS, Pattern.MULTILINE) }
 
-    fun parse(string: String): MarkdownText {
+    fun parse(string: String): List<MarkdownElement> {
         val elements = mutableListOf<Element>()
         elements.addAll(findElements(string))
-        return MarkdownText(elements)
+        return elements.fold(mutableListOf()) { acc, element ->
+            val last = acc.lastOrNull()
+            when (element) {
+                is Element.Image -> acc.add(
+                    MarkdownElement.Image(
+                        element,
+                        last?.bounds?.second ?: 0
+                    )
+                )
+                is Element.BlockCode -> acc.add(
+                    MarkdownElement.Scroll(
+                        element,
+                        last?.bounds?.second ?: 0
+                    )
+                )
+                else -> {
+                    if (last is MarkdownElement.Text) last.elements.add(element)
+                    else acc.add(
+                        MarkdownElement.Text(
+                            mutableListOf(element),
+                            last?.bounds?.second ?: 0
+                        )
+                    )
+                }
+            }
+            acc
+        }
     }
 
-    fun clear(string: String?): String? {
+    /*fun clear(string: String?): String? {
         string ?: return null
         return parse(string).elements.spread().joinToString(separator = "") { it.clearContent() }
-    }
+    }*/
 
     private fun findElements(string: CharSequence): List<Element> {
         val parents = mutableListOf<Element>()
         val matcher = elementsPattern.matcher(string)
         var lastStartIndex = 0
 
-        loop@while (matcher.find(lastStartIndex)) {
+        loop@ while (matcher.find(lastStartIndex)) {
             val startIndex = matcher.start()
             val endIndex = matcher.end()
 
             //if something is found then everything before - text
-            if (lastStartIndex < startIndex){
+            if (lastStartIndex < startIndex) {
                 parents.add(Element.Text(string.subSequence(lastStartIndex, startIndex)))
             }
 
@@ -70,8 +98,8 @@ object MarkdownParser {
             //groups range for iterate by group
             val groups = 1..12
             var group = -1
-            for (gr in groups){
-                if (matcher.group(gr) != null){
+            for (gr in groups) {
+                if (matcher.group(gr) != null) {
                     group = gr
                     break
                 }
@@ -79,7 +107,7 @@ object MarkdownParser {
 
             var count = matcher.groupCount()
 
-            when (group){
+            when (group) {
                 //not found
                 -1 -> break@loop
 
@@ -186,7 +214,8 @@ object MarkdownParser {
                     //not mine
                     val reg = "(^\\d{1,2}.)".toRegex().find(string.substring(startIndex, endIndex))
                     val order = reg!!.value
-                    text = string.subSequence(startIndex.plus(order.length.inc()), endIndex).toString()
+                    text =
+                        string.subSequence(startIndex.plus(order.length.inc()), endIndex).toString()
 
                     //find inner elements
                     val subs = findElements(text)
@@ -209,7 +238,8 @@ object MarkdownParser {
                     }*/
 
                     val (alt: String?, url: String, title: String?) =
-                        "^!\\[([^\\[\\]]*?)?]\\((\\S*)[ )]?\"?(.*?)?\"?\\)$".toRegex().find(text)!!.destructured
+                        "^!\\[([^\\[\\]]*?)?]\\((\\S*)[ )]?\"?(.*?)?\"?\\)$".toRegex()
+                            .find(text)!!.destructured
 
                     val element = Element.Image(url, if (alt.isBlank()) null else alt, title)
                     parents.add(element)
@@ -238,79 +268,110 @@ object MarkdownParser {
 
 data class MarkdownText(val elements: List<Element>)
 
-sealed class Element(){
+sealed class MarkdownElement() {
+    abstract val offset: Int
+    val bounds: Pair<Int, Int> by lazy {
+        when (this) {
+            is Text -> {
+                val end = elements.fold(offset) { acc, el ->
+                    acc + el.spread().map { it.text.length }.sum()
+                }
+                offset to end
+            }
+            is Image -> offset to image.text.length + offset
+            is Scroll -> offset to blockCode.text.length + offset
+        }
+    }
+
+    data class Text(
+        val elements: MutableList<Element>,
+        override val offset: Int = 0
+    ) : MarkdownElement()
+
+    data class Image(
+        val image: Element.Image,
+        override val offset: Int = 0
+    ) : MarkdownElement()
+
+    data class Scroll(
+        val blockCode: Element.BlockCode,
+        override val offset: Int = 0
+    ) : MarkdownElement()
+}
+
+sealed class Element() {
     abstract val text: CharSequence
     abstract val elements: List<Element>
 
     data class Text(
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class UnorderedListItem(
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class Header(
         val level: Int = 1,
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class Quote(
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class Italic(
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class Bold(
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class Strike(
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class Rule(
         override val text: CharSequence = " ", //for span
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class InlineCode(
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class Link(
         val link: String,
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class OrderedListItem(
         val order: String,
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class BlockCode(
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 
     data class Image(
         val url: String,
         val alt: String?,
         override val text: CharSequence,
         override val elements: List<Element> = emptyList()
-    ): Element()
+    ) : Element()
 }
 
 private fun Element.spread(): List<Element> {
@@ -331,6 +392,18 @@ private fun Element.clearContent(): String {
         val element = this@clearContent
         if (element.elements.isEmpty()) append(element.text)
         else element.elements.forEach { append(it.clearContent()) }
+    }.toString()
+}
+
+fun List<MarkdownElement>.clearContent(): String {
+    return StringBuilder().apply {
+        this@clearContent.forEach {
+            when (it) {
+                is MarkdownElement.Text -> it.elements.forEach { el -> append(el.clearContent()) }
+                is MarkdownElement.Image -> append(it.image.clearContent())
+                is MarkdownElement.Scroll -> append(it.blockCode.clearContent())
+            }
+        }
     }.toString()
 }
 

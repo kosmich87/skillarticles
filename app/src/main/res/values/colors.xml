@@ -15,4 +15,7 @@
 
     <color name="search_color_text">#000</color>
     <color name="search_color_hint">#1F000000</color>
+
+    <color name="opacity_color_surface">#08000000</color>
+    <color name="color_divider2">#FC4C4C</color>
 </resources>

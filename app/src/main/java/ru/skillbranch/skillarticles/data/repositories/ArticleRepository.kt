@@ -1,10 +1,11 @@
 package ru.skillbranch.skillarticles.data.repositories
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.map
 import ru.skillbranch.skillarticles.data.*
 
 interface IArticleRepository {
-    fun loadArticleContent(articleId: String): LiveData<String?>
+    fun loadArticleContent(articleId: String): LiveData<List<MarkdownElement>?>
     fun getArticle(articleId: String): LiveData<ArticleData?>
     fun loadArticlePersonalInfo(articleId: String): LiveData<ArticlePersonalInfo?>
     fun getAppSettings(): LiveData<AppSettings>
@@ -18,8 +19,9 @@ class ArticleRepository(
     private val prefs: PrefManager = PrefManager()
 ) : IArticleRepository {
 
-    override fun loadArticleContent(articleId: String): LiveData<String?> {
-        return network.loadArticleContent(articleId) //5s delay from network
+    override fun loadArticleContent(articleId: String): LiveData<List<MarkdownElement>?> {
+        return network.loadArticleContent(articleId)
+            .map { str -> str?.let { MarkdownParser.parse(it) } }
     }
 
     override fun getArticle(articleId: String): LiveData<ArticleData?> {

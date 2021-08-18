@@ -30,7 +30,7 @@ class BottombarBehavior: CoordinatorLayout.Behavior<Bottombar>(){
         type: Int
     ) {
         if (!child.isSearchMode) {
-            var offset = MathUtils.clamp(child.translationY + dy, 0.0f, child.minHeight.toFloat())
+            var offset = MathUtils.clamp(child.translationY + dy, 0.0f, child.height.toFloat())
             if (offset != child.translationY) {
                 child.translationY = offset
             }
