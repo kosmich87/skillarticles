@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.core.view.children
 import ru.skillbranch.skillarticles.data.repositories.MarkdownElement
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
+import ru.skillbranch.skillarticles.extensions.groupByBounds
 import ru.skillbranch.skillarticles.extensions.setPaddingOptionally
 import kotlin.properties.Delegates
 
@@ -161,19 +162,5 @@ class MarkdownContentView @JvmOverloads constructor(
     fun setCopyListener(listener: (String) -> Unit) {
         copyListener = listener
     }
-}
-
-fun List<Pair<Int, Int>>.groupByBounds(bounds: List<Pair<Int, Int>>): List<MutableList<Pair<Int, Int>>>{
-    val results: MutableList<MutableList<Pair<Int, Int>>> = mutableListOf()
-    bounds.forEach { bound ->
-        var group = mutableListOf<Pair<Int, Int>>()
-        this.forEach {
-            if (it.first >= bound.first && it.second <= bound.second){
-                group.add(it)
-            }
-        }
-        results.add(group)
-    }
-    return results
 }
 		
