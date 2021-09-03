@@ -25,8 +25,15 @@
         <item name="colorOnError">#FFFFFF</item>
         <item name="colorSurface">@color/color_surface</item>
         <item name="colorOnSurface">@color/color_on_surface</item>
+        <item name="colorOnBackground">@color/color_gray</item>
 
         <item name="snackbarStyle">@style/CustomSnackbar</item>
+
+        <item name="darkSurfaceColor"  >#272727</item>
+        <item name="lightSurfaceColor"  >#F6F6F6</item>
+        <item name="darkOnSurfaceColor" >#F6F6F6</item>
+        <item name="lightOnSurfaceColor" >#202020</item>
+
     </style>
 
     <style name="ArticleBarsTheme" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar">
@@ -34,14 +41,14 @@
         <item name="colorOnPrimary">@color/color_on_article_bar</item>
         <item name="colorSurface">@color/color_article_bar</item>
         <item name="colorControlNormal">@color/color_on_article_bar</item>
-        <item name="android:editTextColor">@color/search_color_text</item>
-        <item name="android:textColorHint">@color/search_color_hint</item>
+        <item name="android:textColorHint">@color/color_gray</item>
+        <item name="android:textColorPrimary">?attr/colorOnPrimary</item>
     </style>
 
     <style name="ArticleToolbar" parent="Widget.MaterialComponents.Toolbar.Primary">
         <item name="titleTextColor">?attr/colorOnPrimary</item>
         <item name="contentInsetStartWithNavigation">0dp</item>
-        <item name="colorControlActivated">?attr/colorOnPrimary</item>
+        <item name="android:textColorSecondary">?attr/colorOnPrimary</item>
     </style>
 
 
@@ -54,7 +61,7 @@
     </style>
 
     <style name="BottombarSearchIcon" parent="BottombarIcon">
-        <item name="tint">@color/tint_search_color</item>
+        <item name="android:tint">@color/tint_search_color</item>
     </style>
 
     <style name="CustomSnackbar" parent="Widget.MaterialComponents.Snackbar">

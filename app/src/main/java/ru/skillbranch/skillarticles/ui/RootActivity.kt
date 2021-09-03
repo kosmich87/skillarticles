@@ -50,7 +50,7 @@ class RootActivity : AppCompatActivity(), IArticleView {
     private val vbBottombar
         get() = vb.bottombar
     private val vbSubmenu
-        get() = vb.submenu.binding
+        get() = vb.submenu
 
     private lateinit var searchView: SearchView
 

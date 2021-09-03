@@ -110,28 +110,86 @@ class Bottombar @JvmOverloads constructor(
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     public override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        //TODO implement me
+        var usedHeight = 0
+        val width = getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
+
+        measureChild(btnLike, widthMeasureSpec, heightMeasureSpec)
+        measureChild(btnBookmark, widthMeasureSpec, heightMeasureSpec)
+        measureChild(btnShare, widthMeasureSpec, heightMeasureSpec)
+        measureChild(btnSettings, widthMeasureSpec, heightMeasureSpec)
+
+        usedHeight += btnLike.measuredHeight + paddingTop + paddingBottom
+        setMeasuredDimension(width, usedHeight)
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     public override fun onLayout(p0: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        //TODO implement me
+        val usedHeight = paddingTop
+        val bodyWidth = r - l - paddingLeft - paddingRight
+        val left = paddingLeft
+        val right = paddingLeft + bodyWidth
+
+        btnLike.layout(
+            left,
+            iconSize,
+            iconSize,
+            0
+        )
+
+        btnSettings.layout(
+            right - iconSize,
+            iconSize,
+            right,
+            0
+        )
+
+        btnBookmark.layout(
+            left + 2 * iconSize,
+            iconSize,
+            left + 3 * iconSize,
+            0
+        )
+
+        btnShare.layout(
+            left + 3 * iconSize,
+            iconSize,
+            left + 4 * iconSize,
+            0
+        )
     }
 
     fun setSearchState(isSearch: Boolean) {
-        //TODO implement me
+
     }
 
     fun setSearchInfo(searchCount: Int = 0, position: Int = 0) {
-        //TODO implement me
+
     }
 
     private fun animatedShowSearch() {
-        //TODO implement me
+        this?.isVisible = true
+        val endRadius = hypot(this?.width.toFloat() ?: 0f, this?.height.toFloat() ?: 0f)
+        val va = ViewAnimationUtils.createCircularReveal(
+            this,
+            this?.width ?: 0,
+            this?.height ?: 0,
+            0f,
+            endRadius
+        )
+        va.start()
     }
 
     private fun animateHideSearch() {
-        //TODO implement me
+        val endRadius = hypot(this.width?.toFloat() ?: 0f, this.height?.toFloat() ?: 0f)
+        val va = ViewAnimationUtils.createCircularReveal(
+            this,
+            this?.width ?: 0,
+            this?.height ?: 0,
+            endRadius,
+            0f
+        )
+        va.doOnEnd { this?.isVisible = false }
+        va.start()
     }
 
     private class SavedState : BaseSavedState, Parcelable {

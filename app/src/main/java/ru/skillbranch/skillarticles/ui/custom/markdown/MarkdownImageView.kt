@@ -132,13 +132,13 @@ class MarkdownImageView private constructor(
                 setPadding(titleTopMargin)
                 isVisible = false
             }
-        }
 
-        addView(tvAlt)
+            addView(tvAlt)
 
-        ivImage.setOnClickListener {
-            if (tvAlt?.isVisible == true) animateHideAlt()
-            else animateShowAlt()
+            ivImage.setOnClickListener {
+                if (tvAlt?.isVisible == true) animateHideAlt()
+                else animateShowAlt()
+            }
         }
     }
 
