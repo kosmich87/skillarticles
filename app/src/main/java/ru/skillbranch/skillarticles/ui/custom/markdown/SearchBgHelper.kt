@@ -16,6 +16,7 @@ import ru.skillbranch.skillarticles.ui.custom.spans.HeaderSpan
 import ru.skillbranch.skillarticles.ui.custom.spans.SearchFocusSpan
 import ru.skillbranch.skillarticles.ui.custom.spans.SearchSpan
 
+//for test constructor
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 class SearchBgHelper(
     context: Context,
@@ -26,6 +27,7 @@ class SearchBgHelper(
     mockDrawableRight: Drawable?
 ) {
 
+    //primary constructor
     constructor(
         context: Context,
         focusListener: (top: Int, bottom: Int) -> Unit
@@ -148,6 +150,7 @@ class SearchBgHelper(
     }
 }
 
+
 abstract class SearchBgRender(
     val padding: Int
 ) {
@@ -175,7 +178,6 @@ class SingleLineRender(
     padding: Int,
     val drawable: Drawable
 ) : SearchBgRender(padding) {
-
     private var lineTop: Int = 0
     private var lineBottom: Int = 0
 
@@ -194,6 +196,7 @@ class SingleLineRender(
         drawable.setBounds(startOffset - padding, lineTop, endOffset + padding, lineBottom)
         drawable.draw(canvas)
     }
+
 }
 
 class MultiLineRender(
@@ -202,7 +205,6 @@ class MultiLineRender(
     private val drawableMiddle: Drawable,
     private val drawableRight: Drawable
 ) : SearchBgRender(padding) {
-
     private var lineTop: Int = 0
     private var lineBottom: Int = 0
     private var lineEndOffset: Int = 0
@@ -221,7 +223,7 @@ class MultiLineRender(
         //draw first line
         lineEndOffset = (layout.getLineRight(startLine) + padding).toInt()
         lineTop = getLineTop(layout, startLine) + topExtraPadding
-        lineBottom = getLineBottom(layout, startLine) - bottomExtraPadding
+        lineBottom = getLineBottom(layout, startLine)// - bottomExtraPadding
         drawStart(canvas, startOffset - padding, lineTop, lineEndOffset, lineBottom)
 
         //draw middle line
