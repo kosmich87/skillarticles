@@ -3,6 +3,7 @@ package ru.skillbranch.skillarticles.ui.custom
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.AttributeSet
@@ -11,14 +12,13 @@ import android.view.View
 import android.view.ViewAnimationUtils
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.annotation.ColorInt
-import androidx.annotation.Px
-import androidx.annotation.VisibleForTesting
+import androidx.annotation.*
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.view.setPadding
 import com.google.android.material.shape.MaterialShapeDrawable
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.extensions.attrValue
@@ -40,6 +40,8 @@ class Bottombar @JvmOverloads constructor(
     @Px
     private val iconPadding = context.dpToIntPx(16)
     private val iconTint = context.getColorStateList(R.color.tint_color)
+    @DrawableRes
+    private val bg = context.attrValue(R.attr.selectableItemBackground, needRes = true)
 
     //views
     val btnLike: CheckableImageView
@@ -64,27 +66,36 @@ class Bottombar @JvmOverloads constructor(
     }
 
     init {
+        val materialBg = MaterialShapeDrawable.createWithElevationOverlay(context)
+        materialBg.elevation = elevation
+        setBackgroundColor(bg)
+        background = materialBg
+
         btnLike = CheckableImageView(context).apply {
             setImageResource(R.drawable.like_states)
             imageTintList = iconTint
+            setPadding(iconPadding)
         }
         addView(btnLike)
 
         btnBookmark = CheckableImageView(context).apply {
             setImageResource(R.drawable.bookmark_states)
             imageTintList = iconTint
+            setPadding(iconPadding)
         }
         addView(btnBookmark)
 
         btnShare = AppCompatImageView(context).apply {
             setImageResource(R.drawable.ic_share_black_24dp)
             imageTintList = iconTint
+            setPadding(iconPadding)
         }
         addView(btnShare)
 
         btnSettings = CheckableImageView(context).apply {
             setImageResource(R.drawable.ic_format_size_black_24dp)
             imageTintList = iconTint
+            setPadding(iconPadding)
         }
         addView(btnSettings)
 
@@ -110,16 +121,18 @@ class Bottombar @JvmOverloads constructor(
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     public override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        var usedHeight = 0
+//        var usedHeight = 0
         val width = getDefaultSize(suggestedMinimumWidth, widthMeasureSpec)
+
+        Log.d("Bottombar", "width: $width")
 
         measureChild(btnLike, widthMeasureSpec, heightMeasureSpec)
         measureChild(btnBookmark, widthMeasureSpec, heightMeasureSpec)
         measureChild(btnShare, widthMeasureSpec, heightMeasureSpec)
         measureChild(btnSettings, widthMeasureSpec, heightMeasureSpec)
 
-        usedHeight += btnLike.measuredHeight + paddingTop + paddingBottom
-        setMeasuredDimension(width, usedHeight)
+//        usedHeight += btnLike.measuredHeight + paddingTop + paddingBottom
+        setMeasuredDimension(width, iconSize)
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
@@ -136,13 +149,6 @@ class Bottombar @JvmOverloads constructor(
             0
         )
 
-        btnSettings.layout(
-            right - iconSize,
-            iconSize,
-            right,
-            0
-        )
-
         btnBookmark.layout(
             left + 2 * iconSize,
             iconSize,
@@ -154,6 +160,13 @@ class Bottombar @JvmOverloads constructor(
             left + 3 * iconSize,
             iconSize,
             left + 4 * iconSize,
+            0
+        )
+
+        btnSettings.layout(
+            right - iconSize,
+            iconSize,
+            right,
             0
         )
     }
