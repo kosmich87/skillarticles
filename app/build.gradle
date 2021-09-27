@@ -34,13 +34,6 @@ android {
     buildFeatures {
         viewBinding true
     }
-    sourceSets {
-        main {
-            java {
-                srcDirs '../../skillarticles/app/src/main/java', 'src/test'
-            }
-        }
-    }
 }
 
 dependencies {
