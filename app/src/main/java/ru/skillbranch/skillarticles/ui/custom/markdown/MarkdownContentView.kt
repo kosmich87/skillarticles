@@ -1,9 +1,15 @@
 package ru.skillbranch.skillarticles.ui.custom.markdown
 
 import android.content.Context
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.SparseArray
+import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.util.isEmpty
+import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import ru.skillbranch.skillarticles.data.repositories.MarkdownElement
 import ru.skillbranch.skillarticles.extensions.dpToIntPx
@@ -18,8 +24,7 @@ class MarkdownContentView @JvmOverloads constructor(
 ) : ViewGroup(context, attrs, defStyleAttr) {
     private lateinit var copyListener: (String) -> Unit
     private var elements: List<MarkdownElement> = emptyList()
-
-    private var ids = arrayListOf<Int>()
+    private var layoutManager = LayoutManager()
 
     var textSize by Delegates.observable(14f) { _, old, value ->
         if (value == old) return@observable
@@ -75,6 +80,7 @@ class MarkdownContentView @JvmOverloads constructor(
     fun setContent(content: List<MarkdownElement>) {
         if (elements.isNotEmpty()) return
         elements = content
+        var ind: Int = 1
         content.forEach {
             when (it) {
                 is MarkdownElement.Text -> {
@@ -102,6 +108,7 @@ class MarkdownContentView @JvmOverloads constructor(
                         it.image.alt
                     )
                     addView(iv)
+                    layoutManager.attachToParent(iv, ind)
                 }
 
                 is MarkdownElement.Scroll -> {
@@ -112,8 +119,10 @@ class MarkdownContentView @JvmOverloads constructor(
                     )
                     sv.copyListener = copyListener
                     addView(sv)
+                    layoutManager.attachToParent(sv, ind)
                 }
             }
+            ind++
         }
     }
 
@@ -162,5 +171,84 @@ class MarkdownContentView @JvmOverloads constructor(
     fun setCopyListener(listener: (String) -> Unit) {
         copyListener = listener
     }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        val state = ContentSavedState(super.onSaveInstanceState())
+        state.layout = layoutManager
+        return state
+    }
+
+    override fun dispatchSaveInstanceState(container: SparseArray<Parcelable>?) {
+        children.forEachIndexed { ind, it ->
+            if (it is MarkdownTextView) it.saveHierarchyState(layoutManager.container)
+        }
+        dispatchFreezeSelfOnly(container)
+    }
+
+    override fun dispatchRestoreInstanceState(container: SparseArray<Parcelable>?) {
+        val superState = container?.get(id) as ContentSavedState
+        layoutManager = superState.layout
+        children.forEachIndexed { ind, it ->
+            if (it !is MarkdownTextView) layoutManager.restoreChild(it, ind)
+        }
+        super.dispatchRestoreInstanceState(container)
+    }
+}
+
+private class ContentSavedState: View.BaseSavedState, Parcelable {
+    var layout: LayoutManager = LayoutManager()
+
+    constructor(superState: Parcelable?) : super(superState)
+
+    constructor(src: Parcel): super(src){
+//        layout = src.read
+    }
+}
+
+private class LayoutManager() : Parcelable {
+    var ids: MutableMap<Int, Int> = LinkedHashMap()
+    var container: SparseArray<Parcelable> = SparseArray()
+
+    constructor(parcel: Parcel) : this() {
+        ids = parcel.readSerializable() as LinkedHashMap<Int, Int>
+        container = parcel.readSparseArray<Parcelable>(this::class.java.classLoader) as SparseArray<Parcelable>
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeSerializable(ids as LinkedHashMap)
+        parcel.writeSparseArray(container)
+    }
+
+    fun attachToParent(view: View, index: Int){
+        if (container.isEmpty()){
+            ViewCompat.generateViewId().also {
+                view.id = it
+                ids[index] = it
+            }
+        }else {
+            view.id = ids[index]!!
+            view.restoreHierarchyState(container)
+        }
+    }
+
+    fun restoreChild(view: View, index: Int){
+        view.id = ids[index]!!
+        view.restoreHierarchyState(container)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<LayoutManager> {
+        override fun createFromParcel(parcel: Parcel): LayoutManager {
+            return LayoutManager(parcel)
+        }
+
+        override fun newArray(size: Int): Array<LayoutManager?> {
+            return arrayOfNulls(size)
+        }
+    }
+
 }
 		

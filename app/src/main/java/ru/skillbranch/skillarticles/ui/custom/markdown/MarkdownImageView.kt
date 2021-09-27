@@ -3,6 +3,8 @@ package ru.skillbranch.skillarticles.ui.custom.markdown
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.os.Parcel
+import android.os.Parcelable
 import android.text.Spannable
 import android.view.*
 import android.widget.ImageView
@@ -80,6 +82,7 @@ class MarkdownImageView private constructor(
     }
 
     init {
+        id = View.generateViewId()
         layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
 
         ivImage = ImageView(context).apply {
@@ -238,6 +241,29 @@ class MarkdownImageView private constructor(
         )
         va.doOnEnd { tvAlt?.isVisible = false }
         va.start()
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        super.onRestoreInstanceState(state)
+        if (state is SavedState){
+            tvAlt?.isVisible = state.ssIsOpen
+        }
+    }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        val savedState = SavedState(super.onSaveInstanceState())
+        savedState.ssIsOpen = tvAlt?.isVisible ?: false
+        return savedState
+    }
+}
+
+private class SavedState: View.BaseSavedState, Parcelable {
+    var ssIsOpen: Boolean = false
+
+    constructor(superState: Parcelable?) : super(superState)
+
+    constructor(src: Parcel): super(src){
+        ssIsOpen = src.readInt() == 1
     }
 }
 
