@@ -172,7 +172,7 @@ class MarkdownContentView @JvmOverloads constructor(
         copyListener = listener
     }
 
-    override fun onSaveInstanceState(): Parcelable? {
+    /*override fun onSaveInstanceState(): Parcelable? {
         val state = ContentSavedState(super.onSaveInstanceState())
         state.layout = layoutManager
         return state
@@ -192,7 +192,7 @@ class MarkdownContentView @JvmOverloads constructor(
             if (it !is MarkdownTextView) layoutManager.restoreChild(it, ind)
         }
         super.dispatchRestoreInstanceState(container)
-    }
+    }*/
 }
 
 private class ContentSavedState: View.BaseSavedState, Parcelable {
